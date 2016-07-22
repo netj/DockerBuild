@@ -3,6 +3,6 @@
 ##
 set -euo pipefail
 currentBranch=$(git rev-parse --abbrev-ref HEAD)
-echo "$currentBranch" |
+echo -n "$currentBranch" |
 # sanitize currentBranch for docker tags
 tr -c 'A-Za-z0-9_.-' _
