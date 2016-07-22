@@ -44,11 +44,11 @@ on_exit() {
                 echo '# Use `'"$Here"'/inspect-container` to open a shell for debugging.'
             }
     esac 2>/dev/null
-    docker tag "$dockerImageBranchTest".$$ "$dockerImageBranchRun"
-    docker tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"
-    docker tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"-$verdict
-    docker tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"-$verdict
-    docker tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"
+    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchRun"
+    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchTest"
+    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchTest"-$verdict
+    docker tag -f "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"-$verdict
+    docker tag -f "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"
     docker rmi -f "$dockerImageBranchTest".$$
     { set +x; } 2>/dev/null
     echo '###############################################################################'
