@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# docker-run -- Wraps docker run fixing some tty and PGID issues
+# docker-run -- Wraps docker run for consistent behavior in DockerBuild
 # $ docker-run [DOCKER_RUN_OPTS...] -- DOCKER_IMAGE [COMMAND [ARG...]]
 #
 # NOTE the `--` before DOCKER_IMAGE is required!
