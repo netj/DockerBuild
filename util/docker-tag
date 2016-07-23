@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# docker-tag -- Wraps docker tag to provide a uniform interface
+# $ docker-tag DOCKER_IMAGE1 DOCKER_IMAGE2
+#
+##
+set -euo pipefail
+. "$(dirname "$0")"/../DockerBuild.bash
+
+case $(docker version --format="{{.Client.Version}}") in
+    1.[0-9].*)  # old clients required -f flag for moving tags (for Travis CI w/ trusty GCE)
+        exec docker tag -f "$@" ;;
+    *) # which got deprecated in 1.10 and removed later (See: https://docs.docker.com/v1.10/engine/deprecated/)
+        exec docker tag    "$@" ;;
+esac

@@ -94,11 +94,11 @@ on_exit() {
                 echo '# Use `'"$Here"'/inspect-container` to open a shell or run commands in this build.'
             }
     esac 2>/dev/null
-    docker tag -f "$dockerImageBranchBuild".$$ "$dockerImageBranchRun"
-    docker tag -f "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"
-    docker tag -f "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"-$verdict
-    docker tag -f "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"-$verdict
-    docker tag -f "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"
+    docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchRun"
+    docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"
+    docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"-$verdict
+    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"-$verdict
+    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"
     docker rmi -f "$dockerImageBranchBuild".$$
     { set +x; } 2>/dev/null
     echo '###############################################################################'

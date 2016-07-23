@@ -26,7 +26,7 @@ Here=$(dirname "$0")
 on_exit() {
     exitStatus=$?  # keep it to preserve the test's exit status
     case $exitStatus in 0)
-        docker tag "$dockerImageToRunTest" "$dockerImageBranchStable"
+        docker-tag "$dockerImageToRunTest" "$dockerImageBranchStable"
     esac
     docker commit "$dockerContainerTest" "$dockerImageBranchTest".$$
     docker rm -f "$dockerContainerTest"
@@ -44,11 +44,11 @@ on_exit() {
                 echo '# Use `'"$Here"'/inspect-container` to open a shell for debugging.'
             }
     esac 2>/dev/null
-    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchRun"
-    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchTest"
-    docker tag -f "$dockerImageBranchTest".$$ "$dockerImageBranchTest"-$verdict
-    docker tag -f "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"-$verdict
-    docker tag -f "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"
+    docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchRun"
+    docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"
+    docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"-$verdict
+    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"-$verdict
+    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"
     docker rmi -f "$dockerImageBranchTest".$$
     { set +x; } 2>/dev/null
     echo '###############################################################################'
