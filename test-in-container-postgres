@@ -6,6 +6,7 @@
 set -euo pipefail
 . "$(dirname "$0")"/DockerBuild.bash
 
+: ${POSTGRES_DOCKER_IMAGE:=postgres}  # Docker image name holding postgres
 : ${DOCKER_PGNAME:=test-postgres.$$}
 : ${POSTGRES_PASSWORD:=$RANDOM$RANDOM}
 : ${POSTGRES_START_TIME:=4} # seconds
@@ -16,7 +17,7 @@ set -x
 docker run --detach --name "$DOCKER_PGNAME" \
     --env POSTGRES_USER="$USER" \
     --env POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
-    postgres \
+    "$POSTGRES_DOCKER_IMAGE" \
     #
 
 # wait until postgres starts
@@ -24,7 +25,7 @@ postgres-has-started() {
     docker run --rm --name "$DOCKER_PGNAME.check" \
         --link "$DOCKER_PGNAME" \
         --env PGPASSWORD="$POSTGRES_PASSWORD" \
-        postgres \
+        "$POSTGRES_DOCKER_IMAGE" \
         psql -h "$DOCKER_PGNAME" -U "$USER" -l
 }
 sleep $POSTGRES_START_TIME  # give it some initial time to start
