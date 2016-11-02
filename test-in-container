@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# test-in-container -- Tests inside a Docker container with the latest build
+# test-in-container -- Tests the Docker container that holds a build
+# $ test-in-container
+#
+# To specify which build to use, -t or -T flag can be used as in build-in-container:
+# $ test-in-container [-t TAG | -T FULL_TAG] TEST_COMMAND [ARG...]
+#
+# TEST_COMMAND, which defaults to `make -j test`, can be overridden by the
+# DOCKER_TEST_COMMAND variable in DockerBuild.conf.
 ##
 set -euo pipefail
 . "$(dirname "$0")"/DockerBuild.bash
+. parse-docker-tag-to-use.bash
 
 # NOTE other containers, e.g., postgresql or gpdb, can be run externally, then
 # their names can be passed as arguments for --link options followed by the
@@ -15,12 +23,18 @@ set -euo pipefail
 
 tagFromGit=$(docker-tag-from-git)
 dockerContainerTest+="$DOCKER_CONTAINER.$tagFromGit.test.$$"
-dockerImageBranchRun=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_RUN" "$tagFromGit")
-dockerImageBranchBuild=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_BUILD" "$tagFromGit")
-dockerImageBranchTest=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_TEST" "$tagFromGit")
-dockerImageBranchStable=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_STABLE" "$tagFromGit")
+dockerImageBranchRun="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_RUN")"
+dockerImageBranchBuild="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_BUILD")"
+dockerImageBranchStable="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_STABLE")"
+dockerImageBranchTest="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_TEST")"
 
-dockerImageToRunTest=$dockerImageBranchBuild
+if [[ -n $DOCKER_IMAGE_TAG ]]; then
+    dockerImageToRunTest="$DOCKER_IMAGE:$DockerImageTagToUse"
+elif [[ -n $DOCKER_IMAGE_TAG_FOR_BRANCH ]]; then
+    dockerImageToRunTest="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_FOR_BRANCH")"
+else
+    dockerImageToRunTest=$dockerImageBranchBuild
+fi
 
 Here=$(dirname "$0")
 on_exit() {
@@ -33,7 +47,7 @@ on_exit() {
     case $exitStatus in
         0)  verdict=PASS
             next-steps() {
-                echo '# Docker image '"$DOCKER_IMAGE_LATEST_TEST"-PASS' now points to the test results'
+                echo '# Docker image '"$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_TEST"-PASS' now points to the test results'
                 echo '# and '"$dockerImageBranchStable"' points to the build the tests were run.'
                 echo '# Use `'"$Here"'/inspect-container` to run commands on the test results.'
             }
@@ -47,8 +61,8 @@ on_exit() {
     docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchRun"
     docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"
     docker-tag "$dockerImageBranchTest".$$ "$dockerImageBranchTest"-$verdict
-    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"-$verdict
-    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE_LATEST_TEST"
+    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_TEST"-$verdict
+    docker-tag "$dockerImageBranchTest".$$ "$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_TEST"
     docker rmi -f "$dockerImageBranchTest".$$
     { set +x; } 2>/dev/null
     echo '###############################################################################'

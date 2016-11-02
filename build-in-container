@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
-# build-in-container -- Builds changes made from host inside Docker container with the master image
+# build-in-container -- Builds changes made from host inside Docker container
 # $ build-in-container
 #
-# It is possible to run the build on a specific Docker image with TAG:
-# $ build-in-container TAG
+# It is possible to run the build on a specific Docker image with TAG for the
+# current branch:
+# $ build-in-container -t TAG
+#
+# To specify the FULL_TAG not specific to the current branch, to run the build
+# on an image identified by "$DOCKER_IMAGE:FULL_TAG":
+# $ build-in-container -T FULL_TAG
 #
 # Also, the build command can be overridden as well:
-# $ build-in-container TAG BUILD_COMMAND [ARG...]
+# $ build-in-container [-t TAG | -T FULL_TAG] BUILD_COMMAND [ARG...]
+#
+# BUILD_COMMAND, which defaults to `make -j`, can be overridden by the
+# DOCKER_BUILD_COMMAND variable in DockerBuild.conf.
 ##
 set -euo pipefail
 . "$(dirname "$0")"/DockerBuild.bash
+. parse-docker-tag-to-use.bash
 
 # Use git to figure out identifiers
 wipTag=; [[ $(git status --porcelain | wc -l) -eq 0 ]] || wipTag="WIP-"
@@ -19,9 +28,9 @@ commitShort="$wipTag${commitFull:0:7}"
 escapedDockerHostMountpoint=$(@sh "$DOCKER_HOST_MOUNTPOINT")
 tagFromGit=$(docker-tag-from-git)
 dockerContainerBuild+="$DOCKER_CONTAINER.$tagFromGit.build.$$"
-dockerImageBranchRun=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_RUN" "$tagFromGit")
-dockerImageBranchBuild=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_BUILD" "$tagFromGit")
-dockerImageBranchStable=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_STABLE" "$tagFromGit")
+dockerImageBranchRun="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_RUN")"
+dockerImageBranchBuild="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_BUILD")"
+dockerImageBranchStable="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_STABLE")"
 
 # Make sure the git repo wasn't cloned using `git clone --reference`
 ! [[ -s "$DOCKER_HOST_PATH"/.git/objects/info/alternates ]] ||
@@ -34,9 +43,10 @@ dockerImageBranchStable=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_STABLE" "$tagFromG
           # See: http://stackoverflow.com/a/29081268/390044
 
 # Allow overriding the Docker image to run build on
-if [[ $# -gt 0 ]]; then
-    Tag=$1; shift
-    dockerImageToRunBuild="$DOCKER_IMAGE:$Tag"
+if [[ -n $DOCKER_IMAGE_TAG ]]; then
+    dockerImageToRunBuild="$DOCKER_IMAGE:$DOCKER_IMAGE_TAG"
+elif [[ -n $DOCKER_IMAGE_TAG_FOR_BRANCH ]]; then
+    dockerImageToRunBuild="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_FOR_BRANCH")"
 else
     # Find latest stable image to use
     if [[ $(docker images -q "$dockerImageBranchStable" | wc -l) -gt 0 ]] ||
@@ -44,8 +54,8 @@ else
         # either the one for this branch if available
         dockerImageToRunBuild=$dockerImageBranchStable
     else
-        # or the latest for master
-        dockerImageToRunBuild=$DOCKER_IMAGE_LATEST_STABLE
+        # or the latest for master branch
+        dockerImageToRunBuild="$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_STABLE"
     fi
 fi
 
@@ -97,8 +107,8 @@ on_exit() {
     docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchRun"
     docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"
     docker-tag "$dockerImageBranchBuild".$$ "$dockerImageBranchBuild"-$verdict
-    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"-$verdict
-    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE_LATEST_BUILD"
+    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_BUILD"-$verdict
+    docker-tag "$dockerImageBranchBuild".$$ "$DOCKER_IMAGE:$DOCKER_IMAGE_TAG_BUILD"
     docker rmi -f "$dockerImageBranchBuild".$$
     { set +x; } 2>/dev/null
     echo '###############################################################################'

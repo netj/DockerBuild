@@ -2,22 +2,27 @@
 # inspect-container -- Runs an interactive shell or given command inside a
 #                      Docker container attached to a past build or test
 #
-# $ inspect-container [TAG]
-# Defaults to opening an interactive shell for the latest build or test
-# unless TAG (shown from `docker images`) is specified.  Here are some
-# example usages:
-# $ inspect-container BRANCH.latest-run
-# $ inspect-container latest
-# $ inspect-container latest-build
-# $ inspect-container latest-test
-# $ inspect-container BRANCH.latest-build
-# $ inspect-container BRANCH.latest-test-FAIL
+# $ inspect-container
+# Defaults to opening an interactive shell for the latest build or test.
 #
-# $ inspect-container TAG COMMAND [ARG...]
+# $ inspect-container -t BRANCH_TAG
+# $ inspect-container -T FULL_TAG
+# To specify an exact build or test image to inspect, a tag (shown from `docker
+# images`) can be specified with -T or a tag specific to a branch with -t.
+# Here are some example usages specific to the current git branch:
+# $ inspect-container -t latest-run
+# $ inspect-container -t latest-build
+# $ inspect-container -t latest-test-FAIL
+# More examples inspecting the latest images across all branches:
+# $ inspect-container -T latest
+# $ inspect-container -T latest-build
+# $ inspect-container -T latest-test
+#
+# $ inspect-container [-t TAG | -T TAG] COMMAND [ARG...]
 # You can run a command instead of an interactive shell by passing it as
 # arguments after the TAG: For example, to push a release from the latest
 # build that passed all tests:
-# $ inspect-container latest-test-PASS  make release
+# $ inspect-container -t latest-test-PASS  make release
 ##
 set -euo pipefail
 . "$(dirname "$0")"/DockerBuild.bash
@@ -30,7 +35,7 @@ if [[ $# -gt 0 ]]; then
     Tag=$1; shift
     dockerImageToInspect="$DOCKER_IMAGE:$Tag"
 else
-    dockerImageToInspect=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_RUN" "$tagFromGit")
+    dockerImageToInspect="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_RUN")"
 fi
 
 # run given command
