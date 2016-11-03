@@ -26,14 +26,16 @@
 ##
 set -euo pipefail
 . "$(dirname "$0")"/DockerBuild.bash
+. parse-docker-tag-to-use.bash
 
 tagFromGit=$(docker-tag-from-git)
 dockerContainerInspect+="$DOCKER_CONTAINER.$tagFromGit.inspect.$$"
 
 # allow overriding tag, but default to what has last run for current branch
-if [[ $# -gt 0 ]]; then
-    Tag=$1; shift
-    dockerImageToInspect="$DOCKER_IMAGE:$Tag"
+if [[ -n $DOCKER_IMAGE_TAG ]]; then
+    dockerImageToInspect="$DOCKER_IMAGE:$DOCKER_IMAGE_TAG"
+elif [[ -n $DOCKER_IMAGE_TAG_FOR_BRANCH ]]; then
+    dockerImageToInspect="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_FOR_BRANCH")"
 else
     dockerImageToInspect="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_RUN")"
 fi

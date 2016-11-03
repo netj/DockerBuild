@@ -12,3 +12,4 @@ while getopts "t:T:" o; do
         T) DOCKER_IMAGE_TAG=$OPTARG ;;
     esac
 done
+shift $(($OPTIND - 1))
