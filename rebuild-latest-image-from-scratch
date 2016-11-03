@@ -16,7 +16,8 @@ docker -v
 pwd
 
 tagFromGit=$(docker-tag-from-git)
-dockerImageBranchBuild=$(printf "$DOCKER_IMAGE_BRANCH_FORMAT_BUILD" "$tagFromGit")
+dockerImageBranchBuild="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_BUILD")"
+dockerImageBranchStable="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_STABLE")"
 
 set -x
 
@@ -31,5 +32,5 @@ docker build \
 "$@"
 
 # tag it as latest stable and publish
-docker tag "$DOCKER_IMAGE_LATEST_BUILD" "$DOCKER_IMAGE_LATEST_STABLE"
-docker push "$DOCKER_IMAGE_LATEST_STABLE"
+docker tag "$dockerImageBranchBuild" "$dockerImageBranchStable"
+docker push "$dockerImageBranchStable"
