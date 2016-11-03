@@ -29,7 +29,7 @@ dockerImageBranchStable="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGi
 dockerImageBranchTest="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_TEST")"
 
 if [[ -n $DOCKER_IMAGE_TAG ]]; then
-    dockerImageToRunTest="$DOCKER_IMAGE:$DockerImageTagToUse"
+    dockerImageToRunTest="$DOCKER_IMAGE:$DOCKER_IMAGE_TAG"
 elif [[ -n $DOCKER_IMAGE_TAG_FOR_BRANCH ]]; then
     dockerImageToRunTest="$DOCKER_IMAGE:$(docker-image-tag-for-branch "$tagFromGit" "$DOCKER_IMAGE_TAG_FOR_BRANCH")"
 else
