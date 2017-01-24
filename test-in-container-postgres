@@ -10,6 +10,7 @@ set -euo pipefail
 : ${DOCKER_PGNAME:=test-postgres.$$}
 : ${POSTGRES_PASSWORD:=$RANDOM$RANDOM}
 : ${POSTGRES_START_TIME:=4} # seconds
+: ${USER:=$(whoami)}
 
 # run a postgres container
 trap 'docker rm -f "$DOCKER_PGNAME"' EXIT
