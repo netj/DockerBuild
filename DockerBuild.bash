@@ -10,7 +10,7 @@ PATH="$Here/util:$Here:$PATH"
 # default values
 : ${DOCKER_HOST_MOUNTPOINT:="/mnt"}
 : ${DOCKER_HOST_PATH:="$(dirname "$Here")"}
-: ${DOCKER_CONTAINER:="$(basename "$DOCKER_HOST_PATH")-build"}
+: ${DOCKER_CONTAINER:="$(basename "$DOCKER_HOST_PATH" | sanitize-docker-container-name)-build"}
 : ${DOCKER_IMAGE:="$USER/$DOCKER_CONTAINER"} # Docker Hub image name for running builds and tests
 : ${DOCKER_IMAGE_TAG_STABLE:="latest"}       # tag name for the latest stable build that passed the test
 : ${DOCKER_IMAGE_TAG_BUILD:="latest-build"}  # tag name for the latest build

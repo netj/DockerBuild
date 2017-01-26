@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# sanitize-docker-container-name -- Turns given
+##
+set -euo pipefail
+# use given arguments or stdin
+[[ $# -eq 0 ]] || exec < <(printf '%s\n' "$@")
+# sanitize
+exec sed -e 's/[^a-zA-Z0-9_.-]/_/g; s/^[^a-zA-Z0-9]//'
